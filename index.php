@@ -4,6 +4,9 @@ require 'vendor/autoload.php';
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 
+
+$db = new PDO('sqlite:todo.db');
+
 $isAjaxRequest = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 
 // Create a log channel
@@ -19,8 +22,10 @@ if (!isset($_SESSION['todos'])) {
     $_SESSION['todos'] = [];
 }
 // Add a new todo item
+
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['new_todo'])) {
-    array_unshift($_SESSION['todos'], ['task' => $_POST['new_todo'], 'done' => false]);
+    $stmt = $db->prepare("INSERT INTO todos (task) VALUES (:task)");
+    $stmt->execute([':task' => $_POST['new_todo']]);
     $log->info('New task added: ' . $_POST['new_todo']);
 
     if ($isAjaxRequest) {
@@ -30,20 +35,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['new_todo'])) {
     }
 }
 
+
 // Toggle the done status
 if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['toggle'])) {
-    $index = $_GET['toggle'];
-    $_SESSION['todos'][$index]['done'] = !$_SESSION['todos'][$index]['done'];
-    usort($_SESSION['todos'], function ($a, $b) {
-        return $b['done'] <=> $a['done'];
-    });
+    $stmt = $db->prepare("UPDATE todos SET done = NOT done WHERE id = :id");
+    $stmt->execute([':id' => $_GET['toggle']]);
 }
 
 // Remove a todo item
 if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['remove'])) {
-    $index = $_GET['remove'];
-    array_splice($_SESSION['todos'], $index, 1);
+    $stmt = $db->prepare("DELETE FROM todos WHERE id = :id");
+    $stmt->execute([':id' => $_GET['remove']]);
 }
+
+
+$todos = $db->query("SELECT * FROM todos ORDER BY done, id DESC");
+
 ?>
 
 
@@ -66,13 +73,13 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['remove'])) {
         <button type="submit">Add</button>
     </form>
     <div id="todo-list">
-        <?php foreach ($_SESSION['todos'] as $index => $todo) : ?>
+        <?php foreach ($todos as $todo) : ?>
             <div class="todo-item">
                 <span class="<?= $todo['done'] ? 'strikethrough' : '' ?>">
                     <?= htmlspecialchars($todo['task']) ?>
                 </span>
-                <a href="?toggle=<?= $index ?>">[<?= $todo['done'] ? 'Uncheck' : 'Check' ?>]</a>
-                <a href="?remove=<?= $index ?>">[Remove]</a>
+                <a href="?toggle=<?= $todo['id'] ?>">[<?= $todo['done'] ? 'Uncheck' : 'Check' ?>]</a>
+                <a href="?remove=<?= $todo['id'] ?>">[Remove]</a>
             </div>
         <?php endforeach; ?>
     </div>
