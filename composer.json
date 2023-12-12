@@ -1,0 +1,21 @@
+{
+  "name": "yomaruhananoshika/php",
+  "scripts": {
+    "start": "php -S localhost:8000",
+    "test": "phpunit --colors=always"
+  },
+  "autoload": {
+    "psr-4": {
+      "Yomaruhananoshika\\Php\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Hananoshika Yomaru",
+      "email": "brenkysbwim@gmail.com"
+    }
+  ],
+  "require": {
+    "monolog/monolog": "^3.5"
+  }
+}

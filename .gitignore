@@ -1,0 +1,6 @@
+/vendor/
+/test.log
+/.idea/        # If using JetBrains PhpStorm
+/.vscode/      # If using Visual Studio Code
+.DS_Store      # macOS file system file
+/node_modules/ # If you happen to use Node.js in your project
